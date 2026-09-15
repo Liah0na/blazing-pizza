@@ -2,8 +2,9 @@ using BlazingPizza;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddSqlite<PizzaStoreContext>("Data Source=pizza.db");
 builder.Services.AddScoped<OrderState>();
@@ -16,24 +17,24 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-app.UseRouting();
-
-app.MapRazorPages();
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
-app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+app.UseAntiforgery();
+app.MapControllers();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 // Initialize the database
-var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+var scopeFactory = app.Services
+    .GetRequiredService<IServiceScopeFactory>();
+
 using (var scope = scopeFactory.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<PizzaStoreContext>();
+    var db = scope.ServiceProvider
+        .GetRequiredService<PizzaStoreContext>();
+
     if (db.Database.EnsureCreated())
     {
         SeedData.Initialize(db);
     }
 }
 
-
 app.Run();
-

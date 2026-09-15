@@ -1,10 +1,32 @@
-﻿<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" />
-    </Found>
-    <NotFound>
-        <LayoutView >
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+﻿@using BlazingPizza.Components
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <base href="/">
+
+    <link rel="icon" href="img/icon-512.png">
+
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
+
+    <link href="css/site.css" rel="stylesheet">
+
+    <HeadOutlet @rendermode="RenderMode.InteractiveServer" />
+</head>
+
+<body>
+
+    <Routes @rendermode="RenderMode.InteractiveServer" />
+
+    <script src="_framework/blazor.web.js"></script>
+
+</body>
+
+</html>
