@@ -1,116 +1,173 @@
 @page "/"
+@using BlazingPizza.Components.Layout
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject OrderState OrderState
 
-<div class="top-bar">
-    <a class="logo" href="">
-        <img src="img/logo.svg" />
-    </a>
+<NavMenu />
 
-    <a href="" class="nav-tab">
-        <img src="img/pizza-slice.svg" />
-        <div>Get Pizza</div>
-    </a>
+<div class="content">
+    <div class="main">
+        <!-- Page heading -->
+        <div class="mb-4">
+            <h1 class="display-5 fw-bold mb-2">
+                Blazing Pizzas
+            </h1>
+            <p class="text-muted mb-0">
+                Choose your favorite pizza and customize it your way.
+            </p>
+        </div>
 
-    <a href="myorders" class="nav-tab">
-        <img src="img/bike.svg" />
-        <div>My orders</div>
-    </a>
-</div>
-
-<div class="main">
-
-    <h1>Blazing Pizzas</h1>
-
-    <ul class="pizza-cards">
-
-        @foreach (var special in specials)
+        <!-- Pizza cards -->
+        @if (specials.Count == 0)
         {
-            <li @onclick="@(() => OrderState.ShowConfigurePizzaDialog(special))"
-                style="background-image: url('@special.ImageUrl')">
-
-                <div class="pizza-info">
-
-                    <span class="title">@special.Name</span>
-
-                    @special.Description
-
-                    <span class="price">
-                        @special.GetFormattedBasePrice()
+            <div class="text-center py-5">
+                <div class="spinner-border text-warning mb-3" role="status">
+                    <span class="visually-hidden">
+                        Loading...
                     </span>
-
                 </div>
+                <p class="text-muted">
+                    Loading our delicious pizzas...
+                </p>
+            </div>
+        }
+        else
+        {
+            <ul class="pizza-cards">
 
-            </li>
+                @foreach (var special in specials)
+                {
+                    <li @onclick="@(() =>
+                                                                                                                                                            OrderState.ShowConfigurePizzaDialog(special))"
+                        style="background-image: url('@special.ImageUrl')" title="Customize @special.Name">
+
+                        <div class="pizza-info">
+                            <span class="title">
+                                @special.Name
+                            </span>
+                            <span class="description">
+                                @special.Description
+                            </span>
+                            <span class="price">
+                                @special.GetFormattedBasePrice()
+                            </span>
+                        </div>
+                    </li>
+                }
+
+            </ul>
         }
 
-    </ul>
-
-</div>
-
-@if (OrderState.ShowingConfigureDialog)
-{
-    <ConfigurePizzaDialog Pizza="OrderState.ConfiguringPizza" OnCancel="OrderState.CancelConfigurePizzaDialog"
-                          OnConfirm="OrderState.ConfirmConfigurePizzaDialog" />
-}
-
-<div class="sidebar">
-
-    @if (order.Pizzas.Any())
+    </div>
+    <!-- Pizza configuration dialog -->
+    @if (OrderState.ShowingConfigureDialog)
     {
-        <div class="order-contents">
+        <ConfigurePizzaDialog Pizza="OrderState.ConfiguringPizza" OnCancel="OrderState.CancelConfigurePizzaDialog"
+                              OnConfirm="OrderState.ConfirmConfigurePizzaDialog" />
+    }
 
-            <h2>Your order</h2>
+    <!-- Shopping cart -->
+    <aside class="sidebar">
 
-            @foreach (var configuredPizza in order.Pizzas)
+        <div class="sidebar-header">
+
+            <h2>
+                Your order
+            </h2>
+
+            @if (order.Pizzas.Any())
             {
-                <div class="cart-item">
-
-                    <a @onclick="@(() => OrderState.RemoveConfiguredPizza(configuredPizza))" class="delete-item">
-                        x
-                    </a>
-
-                    <div class="title">
-                        @configuredPizza.Size" @configuredPizza.Special.Name
-                    </div>
-
-                    <div class="item-price">
-                        @configuredPizza.GetFormattedTotalPrice()
-                    </div>
-
-                </div>
+                <span class="badge rounded-pill text-bg-warning">
+                    @order.Pizzas.Count
+                </span>
             }
 
         </div>
-    }
-    else
-    {
-        <div class="empty-cart">
-            Choose a pizza<br />
-            to get started
+
+        @if (order.Pizzas.Any())
+        {
+            <div class="order-contents">
+
+                @foreach (var configuredPizza in order.Pizzas)
+                {
+                    <div class="cart-item">
+
+                        <div class="cart-item-details">
+
+                            <div class="title">
+                                @configuredPizza.Size"
+                                @configuredPizza.Special.Name
+                            </div>
+
+                            <div class="item-price">
+                                @configuredPizza.GetFormattedTotalPrice()
+                            </div>
+
+                        </div>
+
+                        <button type="button" class="delete-item btn btn-sm btn-outline-danger" title="Remove pizza"
+                                @onclick="@(() =>
+                                                                                                                                                                                                                OrderState.RemoveConfiguredPizza(configuredPizza))">
+
+                            ×
+
+                        </button>
+
+                    </div>
+                }
+
+            </div>
+        }
+        else
+        {
+            <div class="empty-cart text-center">
+
+                <div class="empty-cart-icon mb-3">
+                    🍕
+                </div>
+
+                <h5>
+                    Your order is empty
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Choose a pizza to get started.
+                </p>
+
+            </div>
+        }
+
+        <div class="order-total @(order.Pizzas.Any() ? "" : "hidden")">
+
+            <div>
+
+                <span class="text-muted">
+                    Total
+                </span>
+
+                <strong class="total-price">
+                    @order.GetFormattedTotalPrice()
+                </strong>
+
+            </div>
+
+            <a href="/checkout" class="btn btn-warning fw-semibold">
+
+                Place order
+                <span class="ms-1">→</span>
+
+            </a>
+
         </div>
-    }
 
-    <div class="order-total @(order.Pizzas.Any() ? "" : "hidden")">
-
-        Total:
-
-        <span class="total-price">
-            @order.GetFormattedTotalPrice()
-        </span>
-
-        <a href="/checkout" class="@(order.Pizzas.Count == 0
-                                                           ? "btn btn-warning disabled"
-                                                           : "btn btn-warning")">
-            Order &gt;
-        </a>
-
-    </div>
-
+    </aside>
 </div>
 
+<Footer />
+
 @code {
+
     private List<PizzaSpecial> specials = [];
 
     private Order order => OrderState.Order;
@@ -119,7 +176,9 @@
     {
         var uri = NavigationManager.ToAbsoluteUri("specials");
 
-        specials = await HttpClient.GetFromJsonAsync<List<PizzaSpecial>>(uri)
+        specials =
+            await HttpClient.GetFromJsonAsync<List<PizzaSpecial>>(uri)
             ?? [];
     }
+
 }
