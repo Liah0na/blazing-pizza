@@ -1,0 +1,207 @@
+@page "/checkout"
+
+@using System.Net.Http.Json
+
+@inject OrderState OrderState
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<div class="top-bar">
+
+  <a class="logo" href="/">
+    <img src="img/logo.svg" alt="Blazing Pizza" />
+  </a>
+
+  <a href="/" class="nav-tab">
+    <img src="img/pizza-slice.svg" alt="Pizza" />
+    <div>Get Pizza</div>
+  </a>
+
+</div>
+
+<div class="main">
+
+  <div class="checkout-cols">
+
+    <!-- Order summary -->
+    <div class="checkout-order-details">
+
+      <h4>Review order</h4>
+
+      @foreach (var pizza in Order.Pizzas)
+      {
+        <p>
+          <strong>
+            @pizza.Size"
+            @pizza.Special.Name
+            (R$@pizza.GetFormattedTotalPrice())
+          </strong>
+        </p>
+      }
+
+      <p>
+        <strong>
+          Total price:
+          R$@Order.GetFormattedTotalPrice()
+        </strong>
+      </p>
+
+    </div>
+
+    <!-- Delivery information -->
+    <div class="checkout-order-details">
+
+      <h4>Delivery information</h4>
+
+      <div class="mb-3">
+
+        <label for="userId" class="form-label">
+          User ID
+        </label>
+
+        <input id="userId" class="form-control" @bind="Order.UserId" placeholder="Enter your user ID" />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label for="name" class="form-label">
+          Name
+        </label>
+
+        <input id="name" class="form-control" @bind="Order.DeliveryAddress.Name" placeholder="Your name" />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label for="line1" class="form-label">
+          Address
+        </label>
+
+        <input id="line1" class="form-control" @bind="Order.DeliveryAddress.Line1" placeholder="Street and number" />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label for="line2" class="form-label">
+          Address Line 2
+        </label>
+
+        <input id="line2" class="form-control" @bind="Order.DeliveryAddress.Line2"
+               placeholder="Apartment, suite, etc." />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label for="city" class="form-label">
+          City
+        </label>
+
+        <input id="city" class="form-control" @bind="Order.DeliveryAddress.City" placeholder="City" />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label for="region" class="form-label">
+          Region / State
+        </label>
+
+        <input id="region" class="form-control" @bind="Order.DeliveryAddress.Region" placeholder="State or region" />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label for="postalCode" class="form-label">
+          Postal Code
+        </label>
+
+        <input id="postalCode" class="form-control" @bind="Order.DeliveryAddress.PostalCode"
+               placeholder="Postal code" />
+
+      </div>
+
+    </div>
+
+  </div>
+
+  @if (!string.IsNullOrEmpty(errorMessage))
+  {
+    <div class="alert alert-danger mt-3">
+      @errorMessage
+    </div>
+  }
+
+  <button class="checkout-button btn btn-warning" @onclick="PlaceOrder" disabled="@isSubmitting">
+
+    @(isSubmitting ? "Placing order..." : "Place order")
+
+  </button>
+
+</div>
+
+@code {
+
+  private bool isSubmitting;
+  private string? errorMessage;
+
+  private Order Order => OrderState.Order;
+
+  protected override void OnInitialized()
+  {
+    /*
+     * Make sure DeliveryAddress exists before the
+     * input fields try to bind to it.
+     */
+    Order.DeliveryAddress ??= new Address();
+  }
+
+  private async Task PlaceOrder()
+  {
+    errorMessage = null;
+    isSubmitting = true;
+
+    try
+    {
+      var response = await HttpClient.PostAsJsonAsync(
+          NavigationManager.ToAbsoluteUri("orders"),
+          Order);
+
+      if (!response.IsSuccessStatusCode)
+      {
+        var error = await response.Content.ReadAsStringAsync();
+
+        errorMessage =
+            $"Unable to place the order. Server response: {response.StatusCode}";
+
+        Console.WriteLine($"Order error: {error}");
+
+        return;
+      }
+
+      var newOrderId =
+          await response.Content.ReadFromJsonAsync<int>();
+
+      Console.WriteLine($"Order created: {newOrderId}");
+
+      OrderState.ResetOrder();
+
+      NavigationManager.NavigateTo("/myorders");
+    }
+    catch (Exception ex)
+    {
+      errorMessage =
+          "An unexpected error occurred while placing the order.";
+
+      Console.WriteLine($"PlaceOrder error: {ex}");
+    }
+    finally
+    {
+      isSubmitting = false;
+    }
+  }
+}

@@ -3,6 +3,22 @@
 @inject NavigationManager NavigationManager
 @inject OrderState OrderState
 
+<div class="top-bar">
+    <a class="logo" href="">
+        <img src="img/logo.svg" />
+    </a>
+
+    <a href="" class="nav-tab">
+        <img src="img/pizza-slice.svg" />
+        <div>Get Pizza</div>
+    </a>
+
+    <a href="myorders" class="nav-tab">
+        <img src="img/bike.svg" />
+        <div>My orders</div>
+    </a>
+</div>
+
 <div class="main">
 
     <h1>Blazing Pizzas</h1>
@@ -85,8 +101,8 @@
         </span>
 
         <a href="/checkout" class="@(order.Pizzas.Count == 0
-                                     ? "btn btn-warning disabled"
-                                     : "btn btn-warning")">
+                                                           ? "btn btn-warning disabled"
+                                                           : "btn btn-warning")">
             Order &gt;
         </a>
 
